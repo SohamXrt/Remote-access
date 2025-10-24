@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Biometric Capability Check</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #000; color: #0f0; }
+        .result { margin: 10px 0; padding: 10px; background: #111; border-radius: 5px; }
+        .success { border-left: 5px solid #0f0; }
+        .error { border-left: 5px solid #f00; color: #f00; }
+        .info { border-left: 5px solid #ff0; color: #ff0; }
+        button { background: #0f0; color: #000; border: none; padding: 10px 20px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Biometric Capability Check</h1>
+    
+    <div id="results"></div>
+    
+    <button onclick="checkCapabilities()">Check Biometric Support</button>
+    <button onclick="testRegistration()">Test Biometric Registration</button>
+    
+    <script>
+        function log(message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `result ${type}`;
+            div.textContent = message;
+            document.getElementById('results').appendChild(div);
+        }
+
+        async function checkCapabilities() {
+            document.getElementById('results').innerHTML = '';
+            
+            log('🔍 Checking biometric capabilities...');
+            
+            // Check WebAuthn support
+            if ('credentials' in navigator && 'create' in navigator.credentials) {
+                log('✅ WebAuthn API is supported', 'success');
+                
+                // Check platform authenticator
+                try {
+                    const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+                    if (available) {
+                        log('✅ Platform authenticator (biometric) available!', 'success');
+                    } else {
+                        log('❌ No platform authenticator found', 'error');
+                    }
+                } catch (error) {
+                    log('❌ Error checking platform authenticator: ' + error.message, 'error');
+                }
+                
+                // Check conditional mediation
+                try {
+                    if ('mediation' in PublicKeyCredential.prototype) {
+                        log('✅ Conditional mediation supported', 'success');
+                    } else {
+                        log('⚠️ Conditional mediation not supported', 'info');
+                    }
+                } catch (error) {
+                    log('⚠️ Could not check conditional mediation', 'info');
+                }
+                
+            } else {
+                log('❌ WebAuthn API not supported in this browser', 'error');
+            }
+            
+            // Check user agent
+            log('📱 User Agent: ' + navigator.userAgent, 'info');
+            
+            // Check secure context
+            if (location.protocol === 'https:' || location.hostname === 'localhost') {
+                log('✅ Secure context (HTTPS or localhost)', 'success');
+            } else {
+                log('❌ Not a secure context - WebAuthn requires HTTPS', 'error');
+            }
+        }
+
+        async function testRegistration() {
+            if (!('credentials' in navigator)) {
+                log('❌ WebAuthn not supported', 'error');
+                return;
+            }
+
+            try {
+                log('🧪 Testing biometric registration...');
+                
+                const challenge = new Uint8Array(32);
+                crypto.getRandomValues(challenge);
+                
+                const userId = new Uint8Array(16);
+                crypto.getRandomValues(userId);
+                
+                const publicKeyOptions = {
+                    challenge: challenge,
+                    rp: {
+                        name: "Laptop Remote Test",
+                        id: location.hostname
+                    },
+                    user: {
+                        id: userId,
+                        name: "test@example.com",
+                        displayName: "Test User"
+                    },
+                    pubKeyCredParams: [{
+                        type: "public-key",
+                        alg: -7 // ES256
+                    }],
+                    authenticatorSelection: {
+                        authenticatorAttachment: "platform",
+                        userVerification: "required"
+                    },
+                    timeout: 60000
+                };
+
+                const credential = await navigator.credentials.create({
+                    publicKey: publicKeyOptions
+                });
+                
+                if (credential) {
+                    log('✅ Biometric registration successful!', 'success');
+                    log('🔑 Credential ID: ' + credential.id.substring(0, 20) + '...', 'success');
+                } else {
+                    log('❌ Registration failed - no credential returned', 'error');
+                }
+                
+            } catch (error) {
+                log('❌ Registration failed: ' + error.message, 'error');
+                log('📝 Error name: ' + error.name, 'info');
+            }
+        }
+
+        // Auto-run check on page load
+        window.onload = checkCapabilities;
+    </script>
+</body>
+</html>

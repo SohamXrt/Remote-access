@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: gap: https://ssl.gstatic.com 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:; connect-src 'self' http: https: ws: wss:; script-src 'self' 'unsafe-inline' 'unsafe-eval';">
+    <title>Laptop Remote Access - Standalone</title>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .container {
+            flex: 1;
+            padding: 20px;
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #00ff00;
+        }
+        
+        .status-bar {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .status-value {
+            color: #00ff00;
+        }
+        
+        .pairing-section {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        input {
+            background: #222;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 15px;
+            font-size: 18px;
+            text-align: center;
+            border-radius: 5px;
+            width: 150px;
+            margin-bottom: 20px;
+        }
+        
+        .button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        
+        .button:disabled {
+            background: #333;
+            color: #666;
+        }
+        
+        .control-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .control-button {
+            background: #222;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 15px;
+            color: #fff;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 15px 20px;
+            color: #fff;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .notification.success {
+            border-color: #00ff00;
+            background: #001100;
+        }
+        
+        .notification.error {
+            border-color: #ff0000;
+            background: #110000;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔒 LAPTOP REMOTE</h1>
+            <div class="subtitle">Standalone Edition</div>
+        </div>
+
+        <!-- Pairing Section -->
+        <div id="pairing-section" class="pairing-section">
+            <h2 style="margin-bottom: 20px; color: #00ff00;">Device Pairing</h2>
+            <p style="margin-bottom: 20px; color: #ccc;">Enter the pairing code from your laptop:</p>
+            <input type="text" id="pairing-code-input" placeholder="000000" maxlength="6">
+            <br>
+            <button id="pair-button" class="button">Pair Device</button>
+        </div>
+
+        <!-- Main App -->
+        <div id="main-app" class="hidden">
+            <div class="status-bar">
+                <div class="status-item">
+                    <span>Connection:</span>
+                    <span class="status-value" id="connection-status">Disconnected</span>
+                </div>
+                <div class="status-item">
+                    <span>Laptop:</span>
+                    <span class="status-value" id="laptop-name">Unknown</span>
+                </div>
+            </div>
+
+            <h2 style="margin-bottom: 15px; color: #00ff00;">System Controls</h2>
+            <div class="control-grid">
+                <div class="control-button" onclick="sendCommand('lock')">
+                    <div style="font-size: 24px;">🔒</div>
+                    <div>Lock</div>
+                </div>
+                <div class="control-button" onclick="sendCommand('sleep')">
+                    <div style="font-size: 24px;">😴</div>
+                    <div>Sleep</div>
+                </div>
+                <div class="control-button" onclick="sendCommand('restart')">
+                    <div style="font-size: 24px;">🔄</div>
+                    <div>Restart</div>
+                </div>
+                <div class="control-button" onclick="sendCommand('shutdown')">
+                    <div style="font-size: 24px;">⚡</div>
+                    <div>Shutdown</div>
+                </div>
+                <div class="control-button" onclick="sendCommand('wake')">
+                    <div style="font-size: 24px;">☀️</div>
+                    <div>Wake Up</div>
+                </div>
+                <div class="control-button" onclick="listFiles()">
+                    <div style="font-size: 24px;">📁</div>
+                    <div>Files</div>
+                </div>
+            </div>
+
+            <button onclick="unpair()" class="button" style="background: #ff0000; width: 100%;">Unpair Device</button>
+        </div>
+
+        <div id="notification" class="notification"></div>
+    </div>
+
+    <script>
+        // Configuration - UPDATE THIS WITH YOUR CLOUD RELAY SERVER URL
+        const RELAY_URL = 'ws://127.0.0.1:8765';  // Using ADB reverse port forwarding
+        
+        // Persistent device ID
+        let DEVICE_ID = localStorage.getItem('device_id');
+        if (!DEVICE_ID) {
+            DEVICE_ID = 'mobile_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('device_id', DEVICE_ID);
+        }
+        
+        let websocket = null;
+        let connectedLaptopId = localStorage.getItem('paired_laptop_id');
+        let reconnectInterval = null;
+        let heartbeatInterval = null;
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Connect to cloud relay
+        function connectToRelay() {
+            if (websocket && (websocket.readyState === WebSocket.CONNECTING || websocket.readyState === WebSocket.OPEN)) {
+                return;
+            }
+
+            console.log('Connecting to cloud relay:', RELAY_URL);
+            websocket = new WebSocket(RELAY_URL);
+
+            websocket.onopen = () => {
+                console.log('Connected to cloud relay');
+                document.getElementById('connection-status').textContent = 'Connected';
+                
+                // Register this mobile device
+                websocket.send(JSON.stringify({
+                    type: 'register',
+                    device_id: DEVICE_ID,
+                    device_type: 'mobile',
+                    device_name: 'Android Mobile'
+                }));
+
+                // Setup heartbeat
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
+                heartbeatInterval = setInterval(() => {
+                    if (websocket.readyState === WebSocket.OPEN) {
+                        websocket.send(JSON.stringify({type: 'ping'}));
+                    }
+                }, 30000);
+            };
+
+            websocket.onmessage = (event) => {
+                handleMessage(JSON.parse(event.data));
+            };
+
+            websocket.onclose = () => {
+                console.log('Disconnected from cloud relay');
+                document.getElementById('connection-status').textContent = 'Disconnected';
+                if (heartbeatInterval) clearInterval(heartbeatInterval);
+                
+                // Auto-reconnect
+                if (!reconnectInterval) {
+                    reconnectInterval = setInterval(() => {
+                        connectToRelay();
+                    }, 5000);
+                }
+            };
+
+            websocket.onerror = (error) => {
+                console.error('WebSocket error:', error);
+                showNotification('Connection error', 'error');
+            };
+        }
+
+        // Handle incoming messages
+        function handleMessage(data) {
+            console.log('Received:', data);
+            
+            switch (data.type) {
+                case 'registered':
+                    console.log('✅ Registered with relay');
+                    if (connectedLaptopId) {
+                        // Already paired, try to restore connection
+                        showMainApp();
+                    }
+                    break;
+                    
+                case 'existing_pairings':
+                    if (data.pairings && data.pairings.length > 0) {
+                        connectedLaptopId = data.pairings[0].peer_device_id;
+                        localStorage.setItem('paired_laptop_id', connectedLaptopId);
+                        document.getElementById('laptop-name').textContent = data.pairings[0].peer_device_name;
+                        showNotification('Reconnected to paired laptop', 'success');
+                        showMainApp();
+                    }
+                    break;
+                    
+                case 'paired':
+                    connectedLaptopId = data.peer_device_id;
+                    localStorage.setItem('paired_laptop_id', connectedLaptopId);
+                    document.getElementById('laptop-name').textContent = data.peer_device_name || 'Laptop';
+                    showNotification('Successfully paired!', 'success');
+                    showMainApp();
+                    break;
+                    
+                case 'pairing_failed':
+                    showNotification('Pairing failed: ' + data.message, 'error');
+                    break;
+                    
+                case 'unpaired':
+                    connectedLaptopId = null;
+                    localStorage.removeItem('paired_laptop_id');
+                    showNotification('Device unpaired', 'success');
+                    showPairingSection();
+                    break;
+                    
+                case 'relay_message':
+                    handleRelayedMessage(data);
+                    break;
+                    
+                case 'command_result':
+                    showNotification(data.message || 'Command executed', 'success');
+                    break;
+                    
+                case 'error':
+                    showNotification('Error: ' + data.message, 'error');
+                    break;
+            }
+        }
+
+        // Handle relayed messages from laptop
+        function handleRelayedMessage(data) {
+            const messageType = data.message_type;
+            const payload = data.payload;
+            
+            if (messageType === 'file_list') {
+                displayFiles(payload.files, payload.path);
+            } else if (messageType === 'file_content') {
+                showFileContent(payload.path, payload.content);
+            } else if (messageType === 'auth_request') {
+                showAuthRequest(payload);
+            }
+        }
+
+        // Pair with laptop
+        document.getElementById('pair-button').addEventListener('click', () => {
+            const code = document.getElementById('pairing-code-input').value.trim();
+            if (code.length !== 6) {
+                showNotification('Please enter a 6-digit code', 'error');
+                return;
+            }
+
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'pair_request',
+                    pairing_code: code,
+                    device_name: 'Android Mobile'
+                }));
+                showNotification('Pairing...', 'success');
+            } else {
+                showNotification('Not connected to relay', 'error');
+            }
+        });
+
+        // Send command to laptop
+        function sendCommand(command) {
+            if (!connectedLaptopId) {
+                showNotification('No laptop connected', 'error');
+                return;
+            }
+
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'relay_message',
+                    target_device_id: connectedLaptopId,
+                    message_type: 'system_command',
+                    payload: {
+                        command: command
+                    }
+                }));
+                showNotification(`Sending ${command} command...`, 'success');
+            } else {
+                showNotification('Not connected', 'error');
+            }
+        }
+
+        // Request file list
+        function listFiles(path = '/home') {
+            if (!connectedLaptopId) {
+                showNotification('No laptop connected', 'error');
+                return;
+            }
+
+            if (websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'relay_message',
+                    target_device_id: connectedLaptopId,
+                    message_type: 'list_files',
+                    payload: {
+                        path: path
+                    }
+                }));
+                showNotification('Loading files...', 'success');
+            }
+        }
+
+        // Display file list (placeholder)
+        function displayFiles(files, path) {
+            showNotification(`Files in ${path}: ${files.length} items`, 'success');
+        }
+
+        // Show file content (placeholder)
+        function showFileContent(path, content) {
+            alert(`File: ${path}\n\n${content.substring(0, 500)}...`);
+        }
+
+        // Show authentication request (placeholder)
+        function showAuthRequest(payload) {
+            const confirmed = confirm(`Authentication request from laptop:\n${payload.reason || 'Unlock requested'}\n\nApprove?`);
+            
+            if (confirmed && websocket && websocket.readyState === WebSocket.OPEN) {
+                websocket.send(JSON.stringify({
+                    type: 'relay_message',
+                    target_device_id: connectedLaptopId,
+                    message_type: 'auth_response',
+                    payload: {
+                        approved: true
+                    }
+                }));
+                showNotification('Authentication approved', 'success');
+            }
+        }
+
+        // Unpair device
+        function unpair() {
+            if (confirm('Unpair from laptop?')) {
+                if (websocket && websocket.readyState === WebSocket.OPEN) {
+                    websocket.send(JSON.stringify({
+                        type: 'unpair',
+                        target_device_id: connectedLaptopId
+                    }));
+                }
+                connectedLaptopId = null;
+                localStorage.removeItem('paired_laptop_id');
+                showPairingSection();
+            }
+        }
+
+        // UI helpers
+        function showPairingSection() {
+            document.getElementById('pairing-section').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+        }
+
+        function showMainApp() {
+            document.getElementById('pairing-section').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+        }
+
+        // Initialize app
+        window.addEventListener('load', () => {
+            console.log('Laptop Remote Access - Standalone Edition');
+            console.log('Device ID:', DEVICE_ID);
+            
+            // Connect to relay
+            connectToRelay();
+            
+            // Show appropriate screen
+            if (connectedLaptopId) {
+                showMainApp();
+            } else {
+                showPairingSection();
+            }
+        });
+
+        // Handle app pause/resume (Cordova)
+        document.addEventListener('pause', () => {
+            console.log('App paused');
+        });
+
+        document.addEventListener('resume', () => {
+            console.log('App resumed');
+            connectToRelay();
+        });
+    </script>
+</body>
+</html>
