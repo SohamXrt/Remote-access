@@ -428,7 +428,9 @@ async def main():
     print("🔒 Persistent Laptop Remote Access - Cloud Client")
     print("===============================================")
     
-    client = PersistentLaptopClient()
+    # Use Render cloud relay URL
+    relay_url = "wss://remote-access-ojwr.onrender.com"
+    client = PersistentLaptopClient(relay_url=relay_url)
     
     try:
         await client.start()
