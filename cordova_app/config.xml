@@ -1,20 +1,11 @@
 <?xml version='1.0' encoding='utf-8'?>
-<widget id="com.laptopremote.app" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
-    <name>Laptop Remote</name>
+<widget id="com.example.cordovaapp" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:cdv="http://cordova.apache.org/ns/1.0">
+    <name>CordovaApp</name>
     <description>Sample Apache Cordova App</description>
     <author email="dev@cordova.apache.org" href="https://cordova.apache.org">
         Apache Cordova Team
     </author>
-    <content src="standalone_app.html" />
+    <content src="index.html" />
     <allow-intent href="http://*/*" />
     <allow-intent href="https://*/*" />
-    <allow-navigation href="*" />
-    <access origin="*" />
-    <access origin="http://*/*" />
-    <access origin="https://*/*" />
-    <preference name="AndroidInsecureFileModeEnabled" value="true" />
-    <preference name="AndroidPermissions" value="true" />
-    <preference name="AndroidNetworkSecurityConfig" value="network_security_config" />
-    <allow-navigation href="http://*/*" />
-    <allow-navigation href="https://*/*" />
 </widget>
