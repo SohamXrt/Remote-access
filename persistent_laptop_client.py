@@ -119,7 +119,7 @@ class PersistentLaptopClient:
             
         elif msg_type == "existing_pairings":
             self.paired_devices = data.get("pairings", [])
-            logger.info(f"📋 Found {len(self.paired_devices)} existing pairing(s)")
+            logger.info(f"📝 Found {len(self.paired_devices)} existing pairing(s)")
             
             for pairing in self.paired_devices:
                 peer_name = pairing.get("peer_device_name", "Unknown")
@@ -128,8 +128,6 @@ class PersistentLaptopClient:
             
             if self.paired_devices:
                 logger.info("🔄 Ready to receive commands from paired devices")
-                # Don't generate new pairing code if we have existing pairings
-                return
             
         elif msg_type == "pair_request":
             # Mobile device wants to pair with pairing code
@@ -387,26 +385,34 @@ class PersistentLaptopClient:
         while self.running:
             try:
                 if await self.connect():
-                    # Wait for existing pairings message or generate new code
-                    await asyncio.sleep(2)  # Give time for existing_pairings message
+                    # Start listening for messages in background
+                    listen_task = asyncio.create_task(self.listen_for_messages())
+                    
+                    # Wait for existing pairings message
+                    await asyncio.sleep(1.5)  # Give time for existing_pairings message
                     
                     if not self.paired_devices:
                         # No existing pairings, generate new pairing code
                         code = self.generate_pairing_code()
-                        print(f"\n🔑 PAIRING CODE: {code}")
-                        print(f"📱 Enter this code in your mobile app to pair")
-                        print(f"🖥️  Laptop: {self.device_name}")
-                        print(f"🌐 Connected to persistent cloud relay")
-                        print(f"⏰ Code expires in 10 minutes\n")
+                        logger.info(f"")
+                        logger.info(f"🔑 PAIRING CODE: {code}")
+                        logger.info(f"📱 Enter this code in your mobile app to pair")
+                        logger.info(f"🖥️  Laptop: {self.device_name}")
+                        logger.info(f"🌐 Connected to persistent cloud relay")
+                        logger.info(f"⏰ Code expires in 10 minutes")
+                        logger.info(f"")
                     else:
-                        print(f"\n✅ PERSISTENT LAPTOP CLIENT READY")
-                        print(f"🖥️  Laptop: {self.device_name}")
-                        print(f"🔗 {len(self.paired_devices)} paired device(s) found")
-                        print(f"📱 Mobile devices can connect without pairing code")
-                        print(f"🌐 Connected to persistent cloud relay\n")
+                        # Already paired
+                        logger.info(f"")
+                        logger.info(f"✅ PERSISTENT LAPTOP CLIENT READY")
+                        logger.info(f"🖥️  Laptop: {self.device_name}")
+                        logger.info(f"🔗 {len(self.paired_devices)} paired device(s) found")
+                        logger.info(f"📱 Mobile devices can connect without pairing code")
+                        logger.info(f"🌐 Connected to persistent cloud relay")
+                        logger.info(f"")
                     
-                    # Start listening for messages
-                    await self.listen_for_messages()
+                    # Wait for listen task to complete
+                    await listen_task
                     
                 else:
                     logger.error("Failed to connect, retrying in 10 seconds...")
