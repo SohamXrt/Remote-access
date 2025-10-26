@@ -199,9 +199,9 @@
         
         const SERVER_URL = 'http://10.141.47.200:8000';  // Local fallback
         const CLOUD_RELAY_URL = 'wss://remote-access-ojwr.onrender.com';     // Cloud relay
-        let isPaired = false;
+        let isPaired = localStorage.getItem('isPaired') === 'true' || false;
         let cloudWebSocket = null;
-        let pairedLaptopId = null;
+        let pairedLaptopId = localStorage.getItem('pairedLaptopId') || null;
         let useCloudRelay = true;  // Toggle between local and cloud
         let existingPairings = [];
         let isKnownDevice = false;
@@ -294,6 +294,10 @@
                         pairedLaptopId = pairing.peer_device_id;
                         isPaired = true;
                         
+                        // Save pairing state
+                        localStorage.setItem('isPaired', 'true');
+                        localStorage.setItem('pairedLaptopId', pairedLaptopId);
+                        
                         showNotification(`✅ Reconnected to ${pairing.peer_device_name} (persistent)`, 'success');
                         document.getElementById('pairing-section').classList.add('hidden');
                         document.getElementById('status-section').classList.remove('hidden');
@@ -312,6 +316,11 @@
                 case 'paired':
                     pairedLaptopId = data.peer_device_id;
                     isPaired = true;
+                    
+                    // Save pairing state
+                    localStorage.setItem('isPaired', 'true');
+                    localStorage.setItem('pairedLaptopId', pairedLaptopId);
+                    
                     const persistentText = data.is_persistent ? ' (persistent)' : '';
                     showNotification('✅ ' + data.message + persistentText, 'success');
                     document.getElementById('pairing-section').classList.add('hidden');
@@ -331,6 +340,11 @@
                 case 'unpaired':
                     isPaired = false;
                     pairedLaptopId = null;
+                    
+                    // Clear pairing state
+                    localStorage.removeItem('isPaired');
+                    localStorage.removeItem('pairedLaptopId');
+                    
                     showNotification('⚠️ Device unpaired: ' + data.message, 'error');
                     document.getElementById('pairing-section').classList.remove('hidden');
                     document.getElementById('status-section').classList.add('hidden');
@@ -560,6 +574,10 @@
                     isPaired = false;
                     pairedLaptopId = null;
                     
+                    // Clear pairing state
+                    localStorage.removeItem('isPaired');
+                    localStorage.removeItem('pairedLaptopId');
+                    
                     // Show pairing screen
                     document.getElementById('control-section').classList.add('hidden');
                     document.getElementById('status-section').classList.add('hidden');
@@ -628,6 +646,13 @@
 
         // Initial setup
         updateStatus();
+        
+        // Check if already paired and show correct screen
+        if (isPaired && pairedLaptopId) {
+            document.getElementById('pairing-section').classList.add('hidden');
+            document.getElementById('status-section').classList.remove('hidden');
+            document.getElementById('control-section').classList.remove('hidden');
+        }
         
         // Auto-connect to cloud relay on startup
         setTimeout(async () => {
