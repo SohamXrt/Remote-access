@@ -1,50 +1,615 @@
 <!DOCTYPE html>
-<!--
-    Licensed to the Apache Software Foundation (ASF) under one
-    or more contributor license agreements.  See the NOTICE file
-    distributed with this work for additional information
-    regarding copyright ownership.  The ASF licenses this file
-    to you under the Apache License, Version 2.0 (the
-    "License"); you may not use this file except in compliance
-    with the License.  You may obtain a copy of the License at
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laptop Remote Access - Simple</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #000000;
+            color: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #00ff00;
+        }
+        
+        .section {
+            background: #111;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-bottom: 10px;
+        }
+        
+        .button:hover {
+            background: #00cc00;
+        }
+        
+        .button:disabled {
+            background: #333;
+            color: #666;
+            cursor: not-allowed;
+        }
+        
+        .button.secondary {
+            background: #333;
+            color: #fff;
+            border: 1px solid #555;
+        }
+        
+        .input {
+            background: #222;
+            border: 1px solid #555;
+            color: #fff;
+            padding: 15px;
+            font-size: 18px;
+            text-align: center;
+            border-radius: 5px;
+            width: 150px;
+            margin-bottom: 20px;
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #333;
+            border: 1px solid #555;
+            border-radius: 5px;
+            padding: 15px 20px;
+            color: #fff;
+            z-index: 1000;
+            display: none;
+        }
+        
+        .notification.success {
+            border-color: #00ff00;
+            background: #001100;
+            color: #00ff00;
+        }
+        
+        .notification.error {
+            border-color: #ff0000;
+            background: #110000;
+            color: #ff0000;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        .status-info {
+            color: #00ff00;
+            font-size: 14px;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .auth-icon {
+            font-size: 48px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🔒 LAPTOP REMOTE</h1>
+            <div style="color: #888; font-size: 14px;">Simple Authentication</div>
+        </div>
 
-    http://www.apache.org/licenses/LICENSE-2.0
+        <!-- Pairing Section -->
+        <div id="pairing-section" class="section">
+            <h2 style="margin-bottom: 20px; color: #00ff00; text-align: center;">Device Pairing</h2>
+            <p style="margin-bottom: 20px; color: #ccc; text-align: center;">Enter the pairing code from your laptop:</p>
+            <input type="text" id="pairing-code-input" placeholder="000000" class="input" maxlength="6">
+            <button id="test-connection" class="button secondary">Test Connection</button>
+            <a href="/check-biometric" style="display: block; margin: 10px 0;">
+                <button type="button" class="button secondary">🔍 Check Biometric Support</button>
+            </a>
+            <button id="pair-button" class="button">Pair Device</button>
+        </div>
 
-    Unless required by applicable law or agreed to in writing,
-    software distributed under the License is distributed on an
-    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-     KIND, either express or implied.  See the License for the
-    specific language governing permissions and limitations
-    under the License.
--->
-<html>
-    <head>
-        <meta charset="utf-8">
-        <!--
-        Customize this policy to fit your own app's needs. For more guidance, please refer to the docs:
-            https://cordova.apache.org/docs/en/latest/
-        Some notes:
-            * https://ssl.gstatic.com is required only on Android and is needed for TalkBack to function properly
-            * Disables use of inline scripts in order to mitigate risk of XSS vulnerabilities. To change this:
-                * Enable inline JS: add 'unsafe-inline' to default-src
-        -->
-        <meta http-equiv="Content-Security-Policy" content="default-src 'self' data: https://ssl.gstatic.com 'unsafe-eval'; style-src 'self' 'unsafe-inline'; media-src *; img-src 'self' data: content:;">
-        <meta name="format-detection" content="telephone=no">
-        <meta name="msapplication-tap-highlight" content="no">
-        <meta name="viewport" content="initial-scale=1, width=device-width, viewport-fit=cover">
-        <meta name="color-scheme" content="light dark">
-        <link rel="stylesheet" href="css/index.css">
-        <title>Hello World</title>
-    </head>
-    <body>
-        <div class="app">
-            <h1>Apache Cordova</h1>
-            <div id="deviceready" class="blink">
-                <p class="event listening">Connecting to Device</p>
-                <p class="event received">Device is Ready</p>
+        <!-- Authentication Section -->
+        <div id="auth-section" class="section hidden">
+            <div class="auth-icon">🔐</div>
+            <h3 style="color: #00ff00; margin-bottom: 20px; text-align: center;">Authentication Required</h3>
+            <p id="auth-message" style="color: #ccc; margin-bottom: 20px; text-align: center;">
+                Your laptop is requesting authentication
+            </p>
+            <div class="status-info" id="auth-status">Click authenticate to confirm your identity</div>
+            <button id="authenticate-button" class="button">Authenticate</button>
+        </div>
+
+        <!-- Control Panel -->
+        <div id="control-section" class="section hidden">
+            <h3 style="color: #00ff00; margin-bottom: 20px; text-align: center;">System Controls</h3>
+            <button class="button secondary" onclick="executeCommand('lock')">🔒 Lock Screen</button>
+            <button class="button secondary" onclick="executeCommand('sleep')">😴 Sleep</button>
+            <button class="button secondary" onclick="executeCommand('restart')">🔄 Restart</button>
+            <button class="button secondary" onclick="executeCommand('shutdown')">⚡ Shutdown</button>
+        </div>
+
+        <!-- Status -->
+        <div id="status-section" class="section hidden">
+            <div class="status-info">
+                <div>Connection: <span id="connection-status" style="color: #00ff00;">Connected</span></div>
+                <div>Server: <span id="server-url" style="color: #ccc;">-</span></div>
+                <div>Last Update: <span id="last-update" style="color: #ccc;">-</span></div>
             </div>
         </div>
-        <script src="cordova.js"></script>
-        <script src="js/index.js"></script>
-    </body>
+    </div>
+
+    <!-- Notification -->
+    <div id="notification" class="notification"></div>
+
+    <script>
+        // Configuration
+        let DEVICE_ID = localStorage.getItem('device_id');
+        if (!DEVICE_ID) {
+            DEVICE_ID = 'mobile_device_' + Math.random().toString(36).substr(2, 9);
+            localStorage.setItem('device_id', DEVICE_ID);
+        }
+        
+        const SERVER_URL = 'http://10.141.47.200:8000';  // Local fallback
+        const CLOUD_RELAY_URL = 'wss://remote-access-ojwr.onrender.com';     // Cloud relay
+        let isPaired = false;
+        let cloudWebSocket = null;
+        let pairedLaptopId = null;
+        let useCloudRelay = true;  // Toggle between local and cloud
+        let existingPairings = [];
+        let isKnownDevice = false;
+
+        // Show notification
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+
+        // Update status display
+        function updateStatus() {
+            const serverText = useCloudRelay ? 'Cloud Relay (Global)' : 'Local Network';
+            document.getElementById('server-url').textContent = serverText;
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString();
+        }
+        
+        // Connect to cloud relay
+        async function connectToCloudRelay() {
+            return new Promise((resolve, reject) => {
+                try {
+                    cloudWebSocket = new WebSocket(CLOUD_RELAY_URL);
+                    
+                    cloudWebSocket.onopen = () => {
+                        // Register as mobile device
+                        cloudWebSocket.send(JSON.stringify({
+                            type: 'register',
+                            device_id: DEVICE_ID,
+                            device_type: 'mobile',
+                            device_name: 'Mobile App'
+                        }));
+                    };
+                    
+                    cloudWebSocket.onmessage = (event) => {
+                        const data = JSON.parse(event.data);
+                        handleCloudMessage(data);
+                    };
+                    
+                    cloudWebSocket.onerror = (error) => {
+                        console.error('WebSocket error:', error);
+                        reject(error);
+                    };
+                    
+                    cloudWebSocket.onclose = () => {
+                        showNotification('⚠️ Disconnected from cloud relay', 'error');
+                        cloudWebSocket = null;
+                    };
+                    
+                    // Wait for registration confirmation
+                    const checkRegistered = (event) => {
+                        const data = JSON.parse(event.data);
+                        if (data.type === 'registered') {
+                            cloudWebSocket.removeEventListener('message', checkRegistered);
+                            resolve(true);
+                        } else if (data.type === 'error') {
+                            reject(new Error(data.message));
+                        }
+                    };
+                    
+                    cloudWebSocket.addEventListener('message', checkRegistered);
+                    
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+        
+        // Handle messages from cloud relay
+        function handleCloudMessage(data) {
+            console.log('Cloud message:', data);
+            
+            switch (data.type) {
+                case 'registered':
+                    isKnownDevice = data.is_known_device || false;
+                    const status = isKnownDevice ? 'Known device' : 'New device';
+                    showNotification(`✅ Connected to cloud relay (${status})`, 'success');
+                    break;
+                    
+                case 'existing_pairings':
+                    existingPairings = data.pairings || [];
+                    if (existingPairings.length > 0) {
+                        // Auto-pair with first existing pairing
+                        const pairing = existingPairings[0];
+                        pairedLaptopId = pairing.peer_device_id;
+                        isPaired = true;
+                        
+                        showNotification(`✅ Reconnected to ${pairing.peer_device_name} (persistent)`, 'success');
+                        document.getElementById('pairing-section').classList.add('hidden');
+                        document.getElementById('status-section').classList.remove('hidden');
+                        document.getElementById('control-section').classList.remove('hidden');
+                        
+                        // Update status with persistent info
+                        document.getElementById('server-url').textContent = `${pairing.peer_device_name} (Persistent)`;
+                    }
+                    break;
+                    
+                case 'device_list':
+                    // Update available devices
+                    updateDeviceList(data.devices);
+                    break;
+                    
+                case 'paired':
+                    pairedLaptopId = data.peer_device_id;
+                    isPaired = true;
+                    const persistentText = data.is_persistent ? ' (persistent)' : '';
+                    showNotification('✅ ' + data.message + persistentText, 'success');
+                    document.getElementById('pairing-section').classList.add('hidden');
+                    document.getElementById('status-section').classList.remove('hidden');
+                    document.getElementById('control-section').classList.remove('hidden');
+                    break;
+                    
+                case 'relay_message':
+                    // Handle relayed messages from laptop
+                    handleRelayedMessage(data);
+                    break;
+                    
+                case 'pairing_failed':
+                    showNotification('❌ Pairing failed: ' + data.message, 'error');
+                    break;
+                    
+                case 'unpaired':
+                    isPaired = false;
+                    pairedLaptopId = null;
+                    showNotification('⚠️ Device unpaired: ' + data.message, 'error');
+                    document.getElementById('pairing-section').classList.remove('hidden');
+                    document.getElementById('status-section').classList.add('hidden');
+                    document.getElementById('control-section').classList.add('hidden');
+                    break;
+                    
+                case 'relay_failed':
+                    showNotification('❌ Message failed: ' + data.message, 'error');
+                    break;
+                    
+                default:
+                    console.log('Unhandled cloud message:', data);
+            }
+        }
+        
+        // Handle relayed messages from laptop
+        function handleRelayedMessage(data) {
+            const messageType = data.message_type;
+            const payload = data.payload;
+            
+            if (messageType === 'auth_request') {
+                // Show authentication request from laptop
+                showAuthRequest();
+                showNotification('🔔 Authentication requested from laptop', 'success');
+            }
+        }
+        
+        // Update device list UI
+        function updateDeviceList(devices) {
+            const laptops = devices.filter(d => d.device_type === 'laptop');
+            console.log('Available laptops:', laptops.length);
+        }
+
+        // Test connection (now tests cloud relay)
+        document.getElementById('test-connection').addEventListener('click', async () => {
+            const button = document.getElementById('test-connection');
+            button.textContent = 'Testing...';
+            button.disabled = true;
+
+            try {
+                if (useCloudRelay) {
+                    // Test cloud relay connection
+                    await connectToCloudRelay();
+                    showNotification('✅ Connected to Cloud Relay!', 'success');
+                    document.getElementById('connection-status').textContent = 'Cloud Connected';
+                } else {
+                    // Test local server connection
+                    const response = await fetch(SERVER_URL + '/', {
+                        method: 'GET',
+                        headers: { 'Accept': 'application/json' }
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        showNotification('✅ Local server connected: ' + data.status, 'success');
+                        document.getElementById('connection-status').textContent = 'Local Connected';
+                    } else {
+                        showNotification('❌ Server error: ' + response.status, 'error');
+                    }
+                }
+                updateStatus();
+            } catch (error) {
+                showNotification('❌ Connection failed: ' + error.message, 'error');
+                console.error('Connection test failed:', error);
+                
+                // Try fallback if cloud fails
+                if (useCloudRelay) {
+                    showNotification('⚠️ Trying local fallback...', 'success');
+                    useCloudRelay = false;
+                    updateStatus();
+                }
+            } finally {
+                button.textContent = 'Test Connection';
+                button.disabled = false;
+            }
+        });
+
+        // Pairing process (now uses cloud relay)
+        document.getElementById('pair-button').addEventListener('click', async () => {
+            const code = document.getElementById('pairing-code-input').value;
+            if (code.length !== 6) {
+                showNotification('Please enter a 6-digit pairing code', 'error');
+                return;
+            }
+
+            const button = document.getElementById('pair-button');
+            button.textContent = 'Pairing...';
+            button.disabled = true;
+
+            try {
+                if (useCloudRelay && cloudWebSocket) {
+                    // Use cloud relay for pairing
+                    cloudWebSocket.send(JSON.stringify({
+                        type: 'pair_request',
+                        pairing_code: code,
+                        device_name: 'Mobile Browser'
+                    }));
+                    
+                    showNotification('🔄 Pairing request sent via cloud relay...', 'success');
+                    
+                } else {
+                    // Fallback to local server pairing
+                    const response = await fetch(SERVER_URL + '/pair-device', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            pairing_code: code,
+                            device_id: DEVICE_ID,
+                            device_name: 'Mobile Browser',
+                            public_key: 'fallback_key_' + Date.now()
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        isPaired = true;
+                        showNotification('✅ Device paired successfully!', 'success');
+                        
+                        // Hide pairing section and show main app
+                        document.getElementById('pairing-section').classList.add('hidden');
+                        document.getElementById('status-section').classList.remove('hidden');
+                        document.getElementById('control-section').classList.remove('hidden');
+                        
+                        // Simulate auth request after a few seconds
+                        setTimeout(() => {
+                            showAuthRequest();
+                        }, 3000);
+                        
+                    } else {
+                        const errorText = await response.text();
+                        showNotification('❌ Pairing failed: ' + errorText, 'error');
+                    }
+                }
+            } catch (error) {
+                showNotification('❌ Pairing failed: ' + error.message, 'error');
+                console.error('Pairing error:', error);
+            } finally {
+                button.textContent = 'Pair Device';
+                button.disabled = false;
+            }
+        });
+
+        // Show authentication request
+        function showAuthRequest() {
+            document.getElementById('auth-section').classList.remove('hidden');
+            document.getElementById('auth-message').textContent = 'Your laptop is requesting authentication';
+            showNotification('🔔 Authentication requested from laptop', 'success');
+        }
+
+        // Simple authentication (fallback)
+        document.getElementById('authenticate-button').addEventListener('click', async () => {
+            const button = document.getElementById('authenticate-button');
+            const message = document.getElementById('auth-message');
+            const status = document.getElementById('auth-status');
+
+            button.textContent = 'Authenticating...';
+            button.disabled = true;
+            message.textContent = 'Processing authentication...';
+
+            try {
+                // Simple confirmation dialog as fallback
+                const confirmed = confirm(
+                    'Authenticate Access Request?\n\n' +
+                    'Your laptop is requesting access. Click OK to grant access or Cancel to deny.'
+                );
+
+                if (confirmed) {
+                    // Simulate authentication delay
+                    await new Promise(resolve => setTimeout(resolve, 1500));
+                    
+                    // Show success
+                    message.textContent = '✅ Authentication successful!';
+                    status.textContent = 'Access granted - laptop unlocked';
+                    button.textContent = 'Authenticated ✓';
+                    button.style.background = '#00ff00';
+                    
+                    showNotification('✅ Authentication successful! Laptop unlocked.', 'success');
+                    
+                    // Hide auth section after delay
+                    setTimeout(() => {
+                        document.getElementById('auth-section').classList.add('hidden');
+                        button.disabled = false;
+                        button.textContent = 'Authenticate';
+                        button.style.background = '#00ff00';
+                        message.textContent = 'Your laptop is requesting authentication';
+                        status.textContent = 'Click authenticate to confirm your identity';
+                    }, 3000);
+                } else {
+                    message.textContent = 'Authentication cancelled';
+                    status.textContent = 'Access denied by user';
+                    showNotification('❌ Authentication cancelled', 'error');
+                    
+                    setTimeout(() => {
+                        document.getElementById('auth-section').classList.add('hidden');
+                    }, 2000);
+                }
+            } catch (error) {
+                message.textContent = 'Authentication failed';
+                status.textContent = error.message;
+                showNotification('❌ Authentication failed: ' + error.message, 'error');
+            } finally {
+                button.disabled = false;
+                if (button.textContent === 'Authenticating...') {
+                    button.textContent = 'Authenticate';
+                }
+            }
+        });
+
+        // Execute system commands (cloud relay or local)
+        async function executeCommand(command) {
+            if (!isPaired) {
+                showNotification('Device not paired', 'error');
+                return;
+            }
+
+            try {
+                showNotification(`Executing ${command}...`, 'success');
+                
+                if (useCloudRelay && cloudWebSocket && pairedLaptopId) {
+                    // Send command via cloud relay
+                    cloudWebSocket.send(JSON.stringify({
+                        type: 'relay_message',
+                        target_device_id: pairedLaptopId,
+                        message_type: 'system_command',
+                        payload: {
+                            command: command,
+                            timestamp: Date.now()
+                        }
+                    }));
+                    
+                    showNotification(`✅ ${command.charAt(0).toUpperCase() + command.slice(1)} sent via cloud relay`, 'success');
+                    
+                } else {
+                    // Fallback to local server
+                    const response = await fetch(SERVER_URL + '/remote-command', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            device_id: DEVICE_ID,
+                            command: command
+                        })
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        showNotification(`✅ ${command.charAt(0).toUpperCase() + command.slice(1)} executed successfully`, 'success');
+                    } else {
+                        showNotification(`❌ Command failed: ${response.status}`, 'error');
+                    }
+                }
+            } catch (error) {
+                showNotification('❌ Command failed: ' + error.message, 'error');
+            }
+        }
+
+        // Update status periodically
+        setInterval(() => {
+            if (isPaired) {
+                updateStatus();
+            }
+        }, 5000);
+
+        // Initial setup
+        updateStatus();
+        
+        // Auto-connect to cloud relay on startup
+        setTimeout(async () => {
+            if (useCloudRelay) {
+                try {
+                    await connectToCloudRelay();
+                    document.getElementById('connection-status').textContent = 'Cloud Connected';
+                    showNotification('🌐 Connected to Cloud Relay!', 'success');
+                } catch (error) {
+                    console.log('Auto-connect to cloud relay failed:', error);
+                    showNotification('⚠️ Cloud relay unavailable, using local mode', 'error');
+                    useCloudRelay = false;
+                    updateStatus();
+                }
+            }
+        }, 1000);
+    </script>
+</body>
 </html>
