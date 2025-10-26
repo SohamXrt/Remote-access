@@ -173,6 +173,7 @@
             <button class="button secondary" onclick="executeCommand('sleep')">😴 Sleep</button>
             <button class="button secondary" onclick="executeCommand('restart')">🔄 Restart</button>
             <button class="button secondary" onclick="executeCommand('shutdown')">⚡ Shutdown</button>
+            <button id="unpair-button" class="button" style="background: #cc0000; margin-top: 20px;" onclick="unpairDevice()">🔓 Unpair Device</button>
         </div>
 
         <!-- Status -->
@@ -538,6 +539,37 @@
             }
         });
 
+        // Unpair device
+        async function unpairDevice() {
+            if (!confirm('Are you sure you want to unpair this device?')) {
+                return;
+            }
+            
+            try {
+                if (useCloudRelay && cloudWebSocket && pairedLaptopId) {
+                    cloudWebSocket.send(JSON.stringify({
+                        type: 'unpair_device',
+                        target_device_id: pairedLaptopId
+                    }));
+                    
+                    showNotification('🔓 Device unpaired successfully', 'success');
+                    
+                    // Reset state
+                    isPaired = false;
+                    pairedLaptopId = null;
+                    
+                    // Show pairing screen
+                    document.getElementById('control-section').classList.add('hidden');
+                    document.getElementById('status-section').classList.add('hidden');
+                    document.getElementById('pairing-section').classList.remove('hidden');
+                } else {
+                    showNotification('❌ Not connected to cloud relay', 'error');
+                }
+            } catch (error) {
+                showNotification('❌ Unpair failed: ' + error.message, 'error');
+            }
+        }
+        
         // Execute system commands (cloud relay or local)
         async function executeCommand(command) {
             if (!isPaired) {
