@@ -13,6 +13,7 @@ import uuid
 import subprocess
 import os
 import hashlib
+import random
 from datetime import datetime
 from pathlib import Path
 
@@ -152,8 +153,11 @@ class PersistentLaptopClient:
             
         elif msg_type == "unpaired":
             target_id = data.get("target_device_id")
-            self.paired_devices = [p for p in self.paired_devices if p['peer_device_id'] != target_id]
-            logger.info(f"❌ Device unpaired: {target_id[:8]}...")
+            if target_id:
+                self.paired_devices = [p for p in self.paired_devices if p['peer_device_id'] != target_id]
+                logger.info(f"❌ Device unpaired: {target_id[:8]}...")
+            else:
+                logger.warning("❌ Received unpaired message with no target_id")
             
         elif msg_type == "relay_message":
             # Handle relayed messages from mobile device
@@ -199,7 +203,10 @@ class PersistentLaptopClient:
         payload = data.get("payload", {})
         from_device = data.get("from_device_id")
         
-        logger.info(f"📨 Relayed message from {from_device[:8]}...: {message_type}")
+        if from_device:
+            logger.info(f"📨 Relayed message from {from_device[:8]}...: {message_type}")
+        else:
+            logger.info(f"📨 Relayed message (unknown sender): {message_type}")
         
         if message_type == "auth_response":
             # Mobile device responded to auth request
@@ -365,16 +372,19 @@ class PersistentLaptopClient:
             
         except Exception as e:
             logger.error(f"Failed to read file: {e}")
-            await self.websocket.send(json.dumps({
-                "type": "relay_message",
-                "target_device_id": target_device_id,
-                "message_type": "error",
-                "payload": {"message": str(e)}
-            }))
+            if self.websocket and not self.websocket.closed:
+                try:
+                    await self.websocket.send(json.dumps({
+                        "type": "relay_message",
+                        "target_device_id": target_device_id,
+                        "message_type": "error",
+                        "payload": {"message": str(e)}
+                    }))
+                except:
+                    pass
     
     def generate_pairing_code(self):
         """Generate a 6-digit pairing code"""
-        import random
         self.pairing_code = f"{random.randint(100000, 999999)}"
         return self.pairing_code
     

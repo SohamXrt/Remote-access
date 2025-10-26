@@ -360,8 +360,10 @@
         
         // Update device list UI
         function updateDeviceList(devices) {
-            const laptops = devices.filter(d => d.device_type === 'laptop');
-            console.log('Available laptops:', laptops.length);
+            if (devices && Array.isArray(devices)) {
+                const laptops = devices.filter(d => d.device_type === 'laptop');
+                console.log('Available laptops:', laptops.length);
+            }
         }
 
         // Test connection (now tests cloud relay)
@@ -421,7 +423,7 @@
             button.disabled = true;
 
             try {
-                if (useCloudRelay && cloudWebSocket) {
+                if (useCloudRelay && cloudWebSocket && cloudWebSocket.readyState === WebSocket.OPEN) {
                     // Use cloud relay for pairing
                     cloudWebSocket.send(JSON.stringify({
                         type: 'pair_request',
@@ -546,7 +548,7 @@
             }
             
             try {
-                if (useCloudRelay && cloudWebSocket && pairedLaptopId) {
+                if (useCloudRelay && cloudWebSocket && cloudWebSocket.readyState === WebSocket.OPEN && pairedLaptopId) {
                     cloudWebSocket.send(JSON.stringify({
                         type: 'unpair_device',
                         target_device_id: pairedLaptopId
@@ -580,7 +582,7 @@
             try {
                 showNotification(`Executing ${command}...`, 'success');
                 
-                if (useCloudRelay && cloudWebSocket && pairedLaptopId) {
+                if (useCloudRelay && cloudWebSocket && cloudWebSocket.readyState === WebSocket.OPEN && pairedLaptopId) {
                     // Send command via cloud relay
                     cloudWebSocket.send(JSON.stringify({
                         type: 'relay_message',

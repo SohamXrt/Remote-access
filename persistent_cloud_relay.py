@@ -160,8 +160,8 @@ async def handle_client(websocket):
                                 }))
                                 laptop_found = True
                                 break
-                            except:
-                                pass
+                            except Exception as e:
+                                logger.error(f"Failed to send pairing request to laptop {laptop_id[:8]}...: {e}")
                     
                     if not laptop_found:
                         await websocket.send(json.dumps({
@@ -183,29 +183,36 @@ async def handle_client(websocket):
                             save_persistent_data()
                             
                             # Notify both devices
-                            await websocket.send(json.dumps({
-                                'type': 'paired',
-                                'peer_device_id': target_id,
-                                'peer_device_name': device_info[target_id]['device_name'],
-                                'is_persistent': True,
-                                'message': message
-                            }))
-                            
-                            await devices[target_id].send(json.dumps({
-                                'type': 'paired',
-                                'peer_device_id': device_id,
-                                'peer_device_name': device_info[device_id]['device_name'],
-                                'is_persistent': True,
-                                'message': f'Successfully paired with laptop (persistent)'
-                            }))
-                            
-                            logger.info(f"✅ Persistent pairing created: {device_id[:8]}... <-> {target_id[:8]}...")
+                            if target_id in device_info and device_id in device_info:
+                                await websocket.send(json.dumps({
+                                    'type': 'paired',
+                                    'peer_device_id': target_id,
+                                    'peer_device_name': device_info[target_id]['device_name'],
+                                    'is_persistent': True,
+                                    'message': message
+                                }))
+                                
+                                try:
+                                    await devices[target_id].send(json.dumps({
+                                        'type': 'paired',
+                                        'peer_device_id': device_id,
+                                        'peer_device_name': device_info[device_id]['device_name'],
+                                        'is_persistent': True,
+                                        'message': f'Successfully paired with laptop (persistent)'
+                                    }))
+                                except Exception as e:
+                                    logger.error(f"Failed to notify target device: {e}")
+                                
+                                logger.info(f"✅ Persistent pairing created: {device_id[:8]}... <-> {target_id[:8]}...")
                         else:
                             # Notify mobile of rejection
-                            await devices[target_id].send(json.dumps({
-                                'type': 'pairing_failed',
-                                'message': message
-                            }))
+                            try:
+                                await devices[target_id].send(json.dumps({
+                                    'type': 'pairing_failed',
+                                    'message': message
+                                }))
+                            except Exception as e:
+                                logger.error(f"Failed to notify rejection to {target_id[:8]}...: {e}")
                 
                 elif msg_type == 'unpair_device':
                     # Remove pairing
@@ -230,13 +237,17 @@ async def handle_client(websocket):
                     
                     # Notify the other device if connected
                     if target_id in devices:
-                        await devices[target_id].send(json.dumps({
-                            'type': 'unpaired',
-                            'target_device_id': device_id,
-                            'message': 'Device was unpaired remotely'
-                        }))
+                        try:
+                            await devices[target_id].send(json.dumps({
+                                'type': 'unpaired',
+                                'target_device_id': device_id,
+                                'message': 'Device was unpaired remotely'
+                            }))
+                        except Exception as e:
+                            logger.error(f"Failed to notify unpair to {target_id[:8]}...: {e}")
                     
-                    logger.info(f"❌ Devices unpaired: {device_id[:8]}... <-> {target_id[:8]}...")
+                    if device_id and target_id:
+                        logger.info(f"❌ Devices unpaired: {device_id[:8]}... <-> {target_id[:8]}...")
                             
                 elif msg_type == 'relay_message':
                     # Relay message between paired devices
@@ -257,9 +268,14 @@ async def handle_client(websocket):
                                     'message_type': message_type,
                                     'payload': payload
                                 }))
-                                logger.info(f"📨 Message relayed: {device_id[:8]}... -> {target_id[:8]}... ({message_type})")
-                            except:
-                                pass
+                                if device_id and target_id:
+                                    logger.info(f"📨 Message relayed: {device_id[:8]}... -> {target_id[:8]}... ({message_type})")
+                            except Exception as e:
+                                logger.error(f"Failed to relay message: {e}")
+                                await websocket.send(json.dumps({
+                                    'type': 'relay_failed',
+                                    'message': f'Failed to deliver message: {str(e)}'
+                                }))
                         else:
                             # Target device not currently connected
                             await websocket.send(json.dumps({
