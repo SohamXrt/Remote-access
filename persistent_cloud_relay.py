@@ -312,7 +312,7 @@ async def handle_client(websocket):
 async def main():
     """Start the server"""
     HOST = "0.0.0.0"
-    # Use PORT env var from Render, fallback to 8765 for local dev
+    # Use PORT env var from cloud provider, fallback to 8765 for local dev
     PORT = int(os.environ.get("PORT", 8765))
     
     logger.info(f"🌐 Persistent Cloud Relay starting on {HOST}:{PORT}")

@@ -1,9 +1,0 @@
-services:
-  - type: web
-    name: laptop-remote-relay
-    env: docker
-    plan: free
-    dockerfilePath: ./Dockerfile
-    envVars:
-      - key: PORT
-        value: 8765

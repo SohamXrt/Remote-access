@@ -198,7 +198,6 @@ Expected latency:
 - USA → Singapore: **~200ms**
 - Europe → Singapore: **~150ms**
 
-Much faster than Render!
 
 ---
 
