@@ -1,0 +1,37 @@
+# APK files (built from cordova_app)
+*.apk
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Cordova build output (keep only source)
+cordova_app/platforms/
+cordova_app/plugins/
+cordova_app/node_modules/
+
+# Device credentials
+configs/
+.laptop_remote_access/
