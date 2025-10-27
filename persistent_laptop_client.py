@@ -223,6 +223,27 @@ class PersistentLaptopClient:
             logger.info(f"🎮 System command from mobile: {command}")
             await self.execute_system_command(command)
         
+        elif message_type == "reset_pairing":
+            # Mobile device requesting pairing code reset
+            logger.info("🔄 Pairing reset requested by mobile device")
+            code = self.generate_pairing_code()
+            
+            # Send the new pairing code back to mobile
+            if self.websocket and not self.websocket.closed:
+                try:
+                    await self.websocket.send(json.dumps({
+                        "type": "relay_message",
+                        "target_device_id": from_device,
+                        "message_type": "pairing_code",
+                        "payload": {
+                            "pairing_code": code,
+                            "laptop_name": self.device_name
+                        }
+                    }))
+                    logger.info(f"🔑 New pairing code generated and sent: {code}")
+                except Exception as e:
+                    logger.error(f"Failed to send pairing code: {e}")
+        
         elif message_type == "list_files":
             # Mobile wants file list
             path = payload.get("path", str(Path.home()))
@@ -444,8 +465,8 @@ async def main():
     print("🔒 Persistent Laptop Remote Access - Cloud Client")
     print("===============================================")
     
-    # Use Render cloud relay URL
-    relay_url = "wss://remote-access-ojwr.onrender.com"
+    # Use Fly.io cloud relay URL
+    relay_url = "wss://laptop-remote-relay.fly.dev"
     client = PersistentLaptopClient(relay_url=relay_url)
     
     try:

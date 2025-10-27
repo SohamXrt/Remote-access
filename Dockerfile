@@ -9,8 +9,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy relay server
 COPY persistent_cloud_relay.py .
 
-# Expose WebSocket port
-EXPOSE 8765
+# Expose WebSocket port (Fly.io uses PORT env var)
+EXPOSE 8080
 
 # Run the relay server
 CMD ["python3", "persistent_cloud_relay.py"]

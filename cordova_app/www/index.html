@@ -149,6 +149,7 @@
             <p style="margin-bottom: 20px; color: #ccc; text-align: center;">Enter the pairing code from your laptop:</p>
             <input type="text" id="pairing-code-input" placeholder="000000" class="input" maxlength="6">
             <button id="test-connection" class="button secondary">Test Connection</button>
+            <button id="request-pairing-code" class="button secondary">🔄 Request New Pairing Code</button>
             <a href="/check-biometric" style="display: block; margin: 10px 0;">
                 <button type="button" class="button secondary">🔍 Check Biometric Support</button>
             </a>
@@ -198,7 +199,7 @@
         }
         
         const SERVER_URL = 'http://10.141.47.200:8000';  // Local fallback
-        const CLOUD_RELAY_URL = 'wss://remote-access-ojwr.onrender.com';     // Cloud relay
+        const CLOUD_RELAY_URL = 'wss://laptop-remote-relay.fly.dev';  // Fly.io cloud relay
         let isPaired = localStorage.getItem('isPaired') === 'true' || false;
         let cloudWebSocket = null;
         let pairedLaptopId = localStorage.getItem('pairedLaptopId') || null;
@@ -369,6 +370,15 @@
                 // Show authentication request from laptop
                 showAuthRequest();
                 showNotification('🔔 Authentication requested from laptop', 'success');
+            } else if (messageType === 'pairing_code') {
+                // Received new pairing code from laptop
+                const code = payload.pairing_code;
+                const laptopName = payload.laptop_name || 'Laptop';
+                
+                // Auto-fill the pairing code input
+                document.getElementById('pairing-code-input').value = code;
+                
+                showNotification(`🔑 New pairing code received from ${laptopName}: ${code}`, 'success');
             }
         }
         
@@ -420,6 +430,47 @@
                 }
             } finally {
                 button.textContent = 'Test Connection';
+                button.disabled = false;
+            }
+        });
+
+        // Request new pairing code from laptop
+        document.getElementById('request-pairing-code').addEventListener('click', async () => {
+            const button = document.getElementById('request-pairing-code');
+            
+            if (!cloudWebSocket || cloudWebSocket.readyState !== WebSocket.OPEN) {
+                showNotification('❌ Not connected to cloud relay. Click "Test Connection" first.', 'error');
+                return;
+            }
+            
+            // If we have existing pairings, use the first laptop ID
+            let targetLaptopId = pairedLaptopId;
+            
+            if (!targetLaptopId && existingPairings.length > 0) {
+                targetLaptopId = existingPairings[0].peer_device_id;
+            }
+            
+            if (!targetLaptopId) {
+                showNotification('❌ No laptop found. Please ensure your laptop is connected.', 'error');
+                return;
+            }
+            
+            button.textContent = 'Requesting...';
+            button.disabled = true;
+            
+            try {
+                cloudWebSocket.send(JSON.stringify({
+                    type: 'relay_message',
+                    target_device_id: targetLaptopId,
+                    message_type: 'reset_pairing',
+                    payload: {}
+                }));
+                
+                showNotification('🔄 Pairing code request sent to laptop...', 'success');
+            } catch (error) {
+                showNotification('❌ Failed to request pairing code: ' + error.message, 'error');
+            } finally {
+                button.textContent = '🔄 Request New Pairing Code';
                 button.disabled = false;
             }
         });
